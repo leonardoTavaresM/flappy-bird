@@ -1,5 +1,8 @@
 console.log('Leozinho Flappy Bird');
 
+const som_HIT = new Audio()
+som_HIT.src = './efeitos/hit.wav'
+
 const sprites = new Image();
 sprites.src = './sprites.png';
 
@@ -65,29 +68,97 @@ const chao = {
     }
 }
 
-const flappBird = {
+function fazColisao(flappyBird, chao){
+    const flappyBirdY = flappyBird.y + flappyBird.height;
+    const chaoY = chao.y;
+
+    if(flappyBirdY >= chaoY){
+        return true;
+    }else{
+        return false;
+    }
+}
+
+
+function criaFlappyBird(){
+    const flappyBird = {
+        spriteX:0,
+        spriteY:0,
+        width:33,
+        height:24,
+        x: 10,
+        y: 50,
+        pulo: 4.6,
+        pula(){
+            flappyBird.velocidade = - flappyBird.pulo;
+        },
+        gravidade:0.25,
+        velocidade:0,
+    
+        atualiza(){
+            if(fazColisao(flappyBird, chao)){
+                console.log('fez colisão');
+                som_HIT.play();
+
+                setTimeout(()=>{
+                    mudaParaTela(Telas.INICIO);
+                },500);
+                
+                return;
+            }
+    
+            flappyBird.velocidade = flappyBird.velocidade + flappyBird.gravidade;
+           // console.log(flappyBird.velocidade);
+            flappyBird.y += flappyBird.velocidade;
+        },
+    
+        desenha: function(){
+            contexto.drawImage(
+                sprites, 
+                flappyBird.spriteX, flappyBird.spriteY, //Sprite X, Sprite Y 
+                flappyBird.width, flappyBird.height, // tamanho do recorte em X(comprimento) e Y(altura)
+                flappyBird.x, flappyBird.y, 
+                flappyBird.width, flappyBird.height,
+                
+            );
+        }
+    }
+    return flappyBird;
+};
+
+const flappyBird = {
     spriteX:0,
     spriteY:0,
     width:33,
     height:24,
     x: 10,
     y: 50,
+    pulo: 4.6,
+    pula(){
+        flappyBird.velocidade = - flappyBird.pulo;
+    },
     gravidade:0.25,
     velocidade:0,
 
     atualiza(){
-        flappBird.velocidade = flappBird.velocidade + flappBird.gravidade;
-       // console.log(flappBird.velocidade);
-        flappBird.y += flappBird.velocidade;
+        if(fazColisao(flappyBird, chao)){
+            console.log('fez colisão');
+            mudaParaTela(Telas.INICIO);
+            return;
+        }
+
+        flappyBird.velocidade = flappyBird.velocidade + flappyBird.gravidade;
+       // console.log(flappyBird.velocidade);
+        flappyBird.y += flappyBird.velocidade;
     },
 
     desenha: function(){
         contexto.drawImage(
             sprites, 
-            flappBird.spriteX, flappBird.spriteY, //Sprite X, Sprite Y 
-            flappBird.width, flappBird.height, // tamanho do recorte em X(comprimento) e Y(altura)
-            flappBird.x, flappBird.y, 
-            flappBird.width, flappBird.height,
+            flappyBird.spriteX, flappyBird.spriteY, //Sprite X, Sprite Y 
+            flappyBird.width, flappyBird.height, // tamanho do recorte em X(comprimento) e Y(altura)
+            flappyBird.x, flappyBird.y, 
+            flappyBird.width, flappyBird.height,
             
         );
     }
@@ -117,18 +188,26 @@ const mensagemGetReady = {
 //[telas]
 //
 
+const globais = {};
 let telaAtiva = {};
 function mudaParaTela(novaTela){
     telaAtiva = novaTela;
+
+    if(telaAtiva.inicializa){
+        telaAtiva.inicializa();
+    }
 };
 
 
 const Telas ={
     INICIO:{
+        inicializa(){
+            globais.flappyBird = criaFlappyBird();
+        },
         desenha(){
             planoDeFundo.desenha();
             chao.desenha();
-            flappBird.desenha();
+            globais.flappyBird.desenha();
             mensagemGetReady.desenha();
         },
         click(){
@@ -146,10 +225,16 @@ Telas.JOGO = {
     desenha(){
         planoDeFundo.desenha();
         chao.desenha();
-        flappBird.desenha();
+        globais.flappyBird.desenha();
+    },
+
+    click(){
+        globais.flappyBird.pula();
+
+        
     },
     atualiza(){
-        flappBird.atualiza();
+        globais.flappyBird.atualiza();
     }
 };
 
